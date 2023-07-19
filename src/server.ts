@@ -64,7 +64,7 @@ app.use((req, res, next) => {
   }
 });
 
-app.use('/', createProxyMiddleware({ target: env.PROXY_DST, changeOrigin: true }));
+app.use('/', createProxyMiddleware({ target: env.PROXY_DST, changeOrigin: true, ws: true }));
 
 app.listen(env.PORT, () => {
   console.log('HTTP Auth Shield is running on port ' + env.PORT);
