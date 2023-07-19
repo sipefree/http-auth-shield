@@ -4,58 +4,69 @@ import bodyParser from 'body-parser';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import fs from 'fs';
 import path from 'path';
+import { EnvironmentBuilder } from '@hexlabs/env-vars-ts';
+import morgan from 'morgan';
+
+const MemoryStore = require('memorystore')(session)
 
 // Load environment variables
-const LOGIN_USER = process.env.LOGIN_USER;
-const LOGIN_PASS = process.env.LOGIN_PASS;
-const PROXY_DST = process.env.PROXY_DST;
+const env = EnvironmentBuilder.create(
+  'LOGIN_USER',
+  'LOGIN_PASS',
+  'PROXY_DST',
+  'PORT',
+  'TITLE'
+)
+  .transform((num: string) => parseInt(num), 'PORT')
+  .defaults({ PORT: 3000, TITLE: 'HTTP Auth Shield' })
+  .environment(process.env)
 
 declare module 'express-session' {
-  export interface SessionData {
+  interface SessionData {
     loggedIn: boolean;
   }
 }
 
 const app = express();
 
-// Define the middleware to parse the body of HTTP requests
+app.use(morgan('combined'));
 app.use(bodyParser.urlencoded({ extended: false }));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '../templates'));
 
 // Set up the session middleware
 app.use(session({
-  secret: 'secret-key', // For production apps, consider a secure, unique secret
+  cookie: { maxAge: 86400000 },
+  secret: 'keyboard cat', // For production apps, consider a secure, unique secret
   resave: false,
-  saveUninitialized: true
+  store: new MemoryStore({
+    checkPeriod: 86400000 // prune expired entries every 24h
+  }),
+  saveUninitialized: false
 }));
 
 app.use((req, res, next) => {
-  if (req.session.loggedIn) {
-    // User is logged in, proceed to the next middleware
+  if (req.session.loggedIn || req.path === '/favicon.ico') {
     next();
   } else if (req.path === '/login' && req.method === 'POST') {
-    // User is attempting to log in
-    if (req.body.username === LOGIN_USER && req.body.password === LOGIN_PASS) {
-      // User has provided correct credentials, log them in
+    const redirectUrl = req.query.redirect?.toString() || '/';
+
+    if (req.body.username === env.LOGIN_USER && req.body.password === env.LOGIN_PASS) {
+      console.log('User has logged in.');
       req.session.loggedIn = true;
-      res.redirect('/'); // Redirect to the homepage
+      res.redirect(redirectUrl);
     } else {
-      // User has provided incorrect credentials, show the login form again
-      res.status(401).send(renderLoginPage('Incorrect username or password'));
+      console.log('Incorrect login attempt.');
+      res.status(401).render('login', { title: env.TITLE, error_message: 'Incorrect username or password', redirect: redirectUrl });
     }
   } else {
-    // User is not logged in, show the login form
-    res.status(401).send(renderLoginPage());
+    res.status(401).render('login', { title: env.TITLE, error_message: null, redirect: req.originalUrl });
   }
 });
 
-// Middleware for proxying the requests
-app.use('/', createProxyMiddleware({ target: PROXY_DST, changeOrigin: true }));
+app.use('/', createProxyMiddleware({ target: env.PROXY_DST, changeOrigin: true }));
 
-app.listen(3000, () => {
-  console.log('HTTP Auth Shield is running on port 3000');
+app.listen(env.PORT, () => {
+  console.log('HTTP Auth Shield is running on port ' + env.PORT);
 });
 
-function renderLoginPage(errorMessage?: string): string {
-  const loginTemplate = fs.readFileSync(path.join(__dirname, '../templates/login.html'), 'utf-8');
-  return errorMessage ? loginTemplate.replace('<!-- ERROR_MESSAGE -->', `<p>${errorMessage}</p>`) : loginTemplate;
-}

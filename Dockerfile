@@ -16,8 +16,13 @@ RUN npm install
 # Copy the rest of the application to the working directory
 COPY . .
 
+ENV LOGIN_USER=user
+ENV LOGIN_PASS=pass
+ENV PROXY_DST=http://example.com:80
+ENV PORT=3000
+
 # The application listens on port 3000, so let's expose it
-EXPOSE 3000
+EXPOSE ${PORT}
 
 # This command starts our application
 CMD [ "npm", "start" ]

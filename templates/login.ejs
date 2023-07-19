@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+    
+        body {
+            font-family: Arial, sans-serif;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+    
+        .form-container {
+            width: 90%;
+            max-width: 400px;
+        }
+    
+        label {
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        p.error {
+            color: red;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+    
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+    
+        button {
+            padding: 10px;
+            width: 100%;
+            font-size: 1.2em;
+            background-color: var(--button-color);
+            color: var(--button-text-color);
+            border: none;
+        }
+    
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text-color: #fff;
+                --bg-color: #333;
+                --button-color: #444;
+                --button-text-color: #fff;
+            }
+        }
+    
+        @media (prefers-color-scheme: light) {
+            :root {
+                --text-color: #333;
+                --bg-color: #fff;
+                --button-color: #ddd;
+                --button-text-color: #333;
+            }
+        }
+    </style>
+    
+    <title><%= title %> Login</title>
+</head>
+<body>
+    <div class="form-container">
+        <h1><%= title %></h1>
+        <% if (error_message) { %>
+            <p class="error"><%= error_message %></p>
+        <% } %>
+        <form method="post" action="/login?redirect=<%= redirect %>">
+            <label for="username">Username</label>
+            <input id="username" name="username" type="text" required>
+
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" required>
+
+            <button type="submit">Log In</button>
+        </form>
+    </div>
+    <script>
+        window.onload = function() {
+            document.getElementById('username').focus();
+        };
+    </script>    
+</body>
+</html>
