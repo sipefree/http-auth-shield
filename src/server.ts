@@ -1,11 +1,11 @@
+import { EnvironmentBuilder } from '@hexlabs/env-vars-ts';
+import bodyParser from 'body-parser';
 import express from 'express';
 import session from 'express-session';
-import bodyParser from 'body-parser';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import fs from 'fs';
-import path from 'path';
-import { EnvironmentBuilder } from '@hexlabs/env-vars-ts';
 import morgan from 'morgan';
+import { Socket } from 'net';
+import path from 'path';
 
 const MemoryStore = require('memorystore')(session)
 
@@ -71,5 +71,11 @@ const server = app.listen(env.PORT, () => {
   console.log('HTTP Auth Shield is running on port ' + env.PORT);
 });
 
-server.on('upgrade', proxy.upgrade);
-
+server.on('upgrade', (req: express.Request, socket: Socket, head: any) => {
+  if (!proxy.upgrade || req.headers['upgrade'] !== 'websocket') {
+    socket.end('HTTP/1.1 400 Bad Request');
+    return;
+  }
+  // Passes the WebSocket requests to the WebSocket server
+  proxy.upgrade(req, socket, head);
+});

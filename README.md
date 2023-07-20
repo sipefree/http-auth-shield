@@ -11,7 +11,10 @@ You must provide the following environment variables when running the HTTP Auth 
 - `LOGIN_USER` - The username for the login form (Example: `user`)
 - `LOGIN_PASS` - The password for the login form (Example: `pass`)
 - `PROXY_DST` - The destination for the HTTP proxy (Example: `http://example.com:80`)
-- `PORT` - The port where the server should listen (Example: `3000`)
+
+The following environment variables can be provided optionally:
+- `PORT` - The port where the server should listen (Default: `3000`)
+- `TITLE` - The title shown above the login form (Default: `HTTP Auth Shield`)
 
 ## Usage
 
@@ -27,7 +30,7 @@ docker pull ghcr.io/sipefree/http-auth-shield:latest
 Here's an example of running HTTP Auth Shield from the Docker command line:
 
 ```bash
-docker run -d -p 3000:3000 --env LOGIN_USER=user --env LOGIN_PASS=pass --env PROXY_DST=http://example.com:80 --env PORT=3000 --name http-auth-shield ghcr.io/sipefree/http-auth-shield:latest
+docker run -d -p 3000:3000 --env TITLE=Login --env LOGIN_USER=user --env LOGIN_PASS=pass --env PROXY_DST=http://example.com:80 --env PORT=3000 --name http-auth-shield ghcr.io/sipefree/http-auth-shield:latest
 ```
 
 ### Running with Docker Compose
@@ -42,6 +45,7 @@ services:
     ports:
       - 3000:3000
     environment:
+      TITLE: Login
       LOGIN_USER: user
       LOGIN_PASS: pass
       PROXY_DST: http://example.com:80
